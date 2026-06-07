@@ -22,14 +22,14 @@ Maven:
 <dependency>
     <groupId>com.babelqueue</groupId>
     <artifactId>babelqueue-spring</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```kotlin
-implementation("com.babelqueue:babelqueue-spring:0.1.0")
+implementation("com.babelqueue:babelqueue-spring:1.0.0")
 ```
 
 Bring your own Spring AMQP (the adapter targets **Spring Boot 3**, Java **17+**):
