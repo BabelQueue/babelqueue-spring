@@ -9,6 +9,21 @@ The envelope wire format is versioned separately by `meta.schema_version`
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-06-07
+
+**1.0.0 — the public API is now SemVer-stable**: breaking changes require a MAJOR,
+following the deprecation policy. The wire envelope is unchanged
+(`schema_version: 1`). Full reference at [babelqueue.com](https://babelqueue.com).
+
+### Changed
+- Require `com.babelqueue:babelqueue-core 1.0.0`.
+
+### Internal
+- Build adds **JaCoCo** (line-coverage gate ≥90%, bound to `verify`) and
+  **SpotBugs** (`effort=Max`, `threshold=Medium`, `spotbugs-exclude.xml` for the
+  read-only-envelope EI_EXPOSE patterns); both run in CI via `mvn verify`. Added a
+  `BabelQueuePublisher(PolyglotMessage)` test to clear the gate.
+
 ## [0.1.0] - 2026-06-06
 
 ### Added
@@ -29,5 +44,6 @@ The envelope wire format is versioned separately by `meta.schema_version`
 - Built on the framework-agnostic `com.babelqueue:babelqueue-core`; targets Spring
   Boot **3** and Java **17+**.
 
-[Unreleased]: https://github.com/BabelQueue/babelqueue-spring/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/BabelQueue/babelqueue-spring/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/BabelQueue/babelqueue-spring/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/BabelQueue/babelqueue-spring/releases/tag/v0.1.0

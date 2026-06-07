@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+      Suppress representation-exposure findings: this adapter passes the canonical
+      envelope's `data` map straight through the codec to/from Spring AMQP without a
+      defensive copy, to honour the <=2% codec-overhead budget (GR-8). The envelope
+      is treated as read-only.
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

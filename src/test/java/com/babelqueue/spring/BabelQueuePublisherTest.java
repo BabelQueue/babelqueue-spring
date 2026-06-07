@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.babelqueue.Envelope;
+import com.babelqueue.PolyglotMessage;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -52,5 +53,35 @@ class BabelQueuePublisherTest {
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
         verify(template).convertAndSend(eq("orders"), payload.capture());
         assertThat(((Envelope) payload.getValue()).traceId()).isEqualTo("carry-over");
+    }
+
+    @Test
+    void publishesAPolyglotMessageToDefaultAndExplicitQueues() {
+        RabbitTemplate template = mock(RabbitTemplate.class);
+        BabelQueuePublisher publisher = new BabelQueuePublisher(template, "default");
+
+        PolyglotMessage message = new PolyglotMessage() {
+            @Override
+            public String getBabelUrn() {
+                return "urn:babel:orders:created";
+            }
+
+            @Override
+            public Map<String, Object> toPayload() {
+                return Map.of("order_id", 7L);
+            }
+        };
+
+        publisher.publish(message); // default queue
+        String id = publisher.publish(message, "orders"); // explicit queue
+
+        verify(template).convertAndSend(eq("default"), org.mockito.ArgumentMatchers.<Object>any());
+
+        ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
+        verify(template).convertAndSend(eq("orders"), payload.capture());
+        Envelope sent = (Envelope) payload.getValue();
+        assertThat(sent.job()).isEqualTo("urn:babel:orders:created");
+        assertThat(sent.data()).containsEntry("order_id", 7L);
+        assertThat(id).isEqualTo(sent.meta().id());
     }
 }

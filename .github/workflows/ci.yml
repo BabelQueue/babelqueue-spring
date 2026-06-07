@@ -26,3 +26,16 @@ jobs:
 
       - name: Test
         run: mvn -B --no-transfer-progress verify
+
+  ci-green:
+    name: CI green
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: ${{ always() }}
+    steps:
+      - name: Fail if any required job did not pass
+        run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "A required job failed or was cancelled."
+            exit 1
+          fi
