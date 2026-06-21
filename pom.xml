@@ -6,7 +6,7 @@
 
     <groupId>com.babelqueue</groupId>
     <artifactId>babelqueue-spring</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>BabelQueue Spring</name>
@@ -50,8 +50,9 @@
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <babelqueue-core.version>1.0.0</babelqueue-core.version>
+        <babelqueue-core.version>1.5.0</babelqueue-core.version>
         <spring-boot.version>3.3.5</spring-boot.version>
+        <opentelemetry.version>1.45.0</opentelemetry.version>
     </properties>
 
     <dependencyManagement>
@@ -60,6 +61,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -95,6 +103,23 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+          The core's OTel module is optional (not transitive), so the end-to-end
+          traceparent cross-hop test (Tracing.publish HeaderSender -> wrapHandler Supplier
+          over Spring AMQP MessageProperties headers) pulls the SDK + in-memory exporter in
+          test scope. Runtime use of this adapter needs no OTel dependency at all — the
+          header seam is a plain Map<String,String>.
+        -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk-testing</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

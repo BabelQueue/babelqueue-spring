@@ -108,6 +108,30 @@ Non-conformant messages (missing URN, unsupported `meta.schema_version`, blank
 `trace_id`, missing `data`) raise a `MessageConversionException`, so Spring rejects
 them — route them to a dead-letter exchange the usual Spring AMQP way.
 
+## Trace propagation (OpenTelemetry `traceparent`, ADR-0028)
+
+The optional core `com.babelqueue.otel` module can carry a W3C `traceparent` so a
+consumer span becomes a true child of the producer span — propagated **out of band** on
+the AMQP `MessageProperties` headers, beside the contract `x-*` headers (a contract header
+always wins a key collision), never inside the frozen envelope (GR-1).
+
+```java
+// produce: HeaderSender -> BabelQueuePublisher.publishWithHeaders
+Tracing.publish(tracer, "urn:babel:orders:created", Map.of("order_id", 1042L), "orders",
+    (envelope, headers) -> babelQueue.publishWithHeaders(envelope, headers));
+
+// consume: take the raw Message too and surface its headers for wrapHandler's Supplier
+@RabbitListener(queues = "orders")
+void onMessage(Envelope envelope, Message message) throws Exception {
+    Tracing.wrapHandler(tracer, h, () -> SpringHeaders.of(message)).handle(envelope);
+}
+```
+
+A header-less `publish(...)` is unchanged; with no `traceparent` the consumer falls back
+to the v0.1 `trace_id`-derived parent. Requires `babelqueue-core` ≥ 1.5.0. No
+OpenTelemetry dependency is needed unless you opt in — the seam is a plain
+`Map<String,String>`.
+
 ## Configuration
 
 ```yaml

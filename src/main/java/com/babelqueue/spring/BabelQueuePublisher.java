@@ -4,6 +4,7 @@ import com.babelqueue.Envelope;
 import com.babelqueue.EnvelopeCodec;
 import com.babelqueue.PolyglotMessage;
 import java.util.Map;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
@@ -15,6 +16,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
  * <pre>
  * babelQueue.publish("urn:babel:orders:created", Map.of("order_id", 1042L), "orders");
  * </pre>
+ *
+ * <p>{@link #publishWithHeaders} additionally carries out-of-band transport headers (e.g.
+ * a W3C {@code traceparent}, ADR-0028) on the AMQP {@code MessageProperties} headers,
+ * <b>beside</b> the contract {@code x-*} headers — the produce-side seam the optional core
+ * {@code com.babelqueue.otel.HeaderSender} wires to.
  */
 public class BabelQueuePublisher {
 
@@ -44,6 +50,26 @@ public class BabelQueuePublisher {
         String target = queue == null || queue.isBlank() ? defaultQueue : queue;
         Envelope envelope = EnvelopeCodec.make(urn, data, target, traceId);
         rabbitTemplate.convertAndSend(target, (Object) envelope);
+        return envelope.meta().id();
+    }
+
+    /**
+     * Publish an already-built {@code envelope} together with out-of-band transport
+     * {@code headers} (e.g. a W3C {@code traceparent}, ADR-0028). The headers are written
+     * onto the AMQP {@code MessageProperties} headers <b>beside</b> the contract {@code x-*}
+     * headers ({@link SpringHeaders#apply}: a contract header always wins a key collision),
+     * never inside the frozen envelope (GR-1). This is the produce-side seam the optional
+     * core {@code com.babelqueue.otel.HeaderSender} wires to; with no/empty headers it is
+     * equivalent to a plain publish. Returns {@code meta.id}.
+     */
+    public String publishWithHeaders(Envelope envelope, Map<String, String> headers) {
+        String target = envelope.meta() != null && envelope.meta().queue() != null
+            && !envelope.meta().queue().isBlank() ? envelope.meta().queue() : defaultQueue;
+        MessagePostProcessor addHeaders = message -> {
+            SpringHeaders.apply(message.getMessageProperties(), headers);
+            return message;
+        };
+        rabbitTemplate.convertAndSend(target, (Object) envelope, addHeaders);
         return envelope.meta().id();
     }
 
