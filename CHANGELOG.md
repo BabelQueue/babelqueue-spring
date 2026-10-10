@@ -10,6 +10,12 @@ The envelope wire format is versioned separately by `meta.schema_version`
 ## [Unreleased]
 
 ### Added
+- **Cross-SDK conformance (GR-5).** The canonical `conformance/` suite (v1.0.0) is vendored under
+  `src/test/resources/conformance` and `BabelQueueConformanceTest` drives the manifest's `cases`, `roundtrip`,
+  `data_shape`, `forbidden_keys` and `rabbitmq.property_projection` sections through
+  `BabelQueueMessageConverter` (`fromMessage` accept/reject, `fromMessage` -> `toMessage` unknown-key
+  preservation, `toMessage` re-emit + the full AMQP property/header projection). CI gains a `conformance` drift-guard job and `ci-green` now requires it. Test-only; no
+  change to the public API or the wire envelope.
 - **OpenTelemetry `traceparent` transport wiring (ADR-0028, v0.2).**
   `BabelQueuePublisher` gains `publishWithHeaders(Envelope, Map<String,String>)` — the
   produce-side seam the optional core `com.babelqueue.otel.HeaderSender` wires to: it sends
@@ -25,7 +31,8 @@ The envelope wire format is versioned separately by `meta.schema_version`
   plain `Map<String,String>`; OpenTelemetry is needed only by callers who opt in.
 
 ### Changed
-- Require `com.babelqueue:babelqueue-core 1.5.0` (the out-of-band header-carrier seam).
+- **Dependency floor:** `babelqueue-core` raised to **1.8.0** (was 1.5.0, the out-of-band header-carrier seam). 1.8.0 preserves
+  unknown top-level and `meta` envelope keys on re-emit (forward compatibility, GR-5); with 1.5.0 the converter dropped them.
 
 ## [1.0.0] - 2026-06-07
 
